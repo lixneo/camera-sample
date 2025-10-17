@@ -1,0 +1,21 @@
+{
+	"pages": [
+		{
+			"path": "pages/index/index"
+		},
+		{
+            "path" : "pages/camera/index",
+            "style" :                                                                                    
+            {
+				"navigationStyle":"custom",
+				"backgroundColor":"#000000"
+            }
+        }
+    ],
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "",
+		"navigationBarBackgroundColor": "#FFFFFF",
+		"backgroundColor": "#FFFFFF"
+	}
+}
