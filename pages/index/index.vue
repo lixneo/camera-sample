@@ -75,7 +75,7 @@ export default {
 			this.imagesrc = path;
 			let base64 = await this.imgToBase64(path)
 			uni.request({
-				url: 'http://192.168.230.85:1224/api/ocr',
+				url: 'http://192.168.1.3:1224/api/ocr',
 				method: 'POST',
 				data: {
 					base64: base64
