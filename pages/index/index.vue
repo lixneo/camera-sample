@@ -103,8 +103,16 @@ export default {
 			})
 		},
 		openCamera() {
-			uni.navigateTo({
-				url: '/pages/camera/index'
+			// uni.navigateTo({
+			// 	url: '/pages/camera/index'
+			// })
+			uni.chooseImage({
+				count: 1,
+				sizeType: ['compressed'],
+				sourceType: ['camera'],
+				success: (res) => {
+					this.savePhoto(res.tempFilePaths[0])
+				}
 			})
 		},
 		//设置图片
