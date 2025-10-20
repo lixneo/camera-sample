@@ -5,10 +5,12 @@
 		<button type="primary" @click="gotoWorkOrder">完工单完工日期录入&比对</button>
 		<image :src="imagesrc" style="width: 100%;" mode="widthFix"></image>
 		<view v-if="imagesrc">
+			<!-- #ifdef APP-PLUS -->
 			<view>
 				<text>扫码结果:</text>
 				<text>{{ scanfResult || '识别中...' }}</text>
 			</view>
+			<!-- #endif -->
 			<view>
 				<text>ocr结果:</text>
 				<text>{{ ocrResult || '识别中...' }}</text>
@@ -105,7 +107,7 @@ export default {
 		openPhoto() {
 			uni.chooseImage({
 				count: 1,
-				sizeType: ['original'],
+				sizeType: ['compressed'], // 压缩
 				sourceType: ['album'],
 				success: (res) => {
 					this.savePhoto(res.tempFilePaths[0])
@@ -118,7 +120,7 @@ export default {
 			})
 			// uni.chooseImage({
 			// 	count: 1,
-			// 	sizeType: ['original'],
+			// 	sizeType: ['original','compressed'],
 			// 	sourceType: ['camera'],
 			// 	success: (res) => {
 			// 		this.savePhoto(res.tempFilePaths[0])
@@ -159,14 +161,33 @@ export default {
 						this.ocrResult = "未识别到日期信息"
 						return
 					}
-
-					// 识别日期信息
-					let dateResult = res.data.data.find(item => {
-						const datePattern = /\d{4}年\d{1,2}月\d{1,2}日/g;
-						const match = item.text.match(datePattern);
-						return match ? match[0] : null;
+					// 识别日期信息, 默认当前年
+					let year = new Date().getFullYear(),month = "",day = "";
+					res.data.data.forEach(item => {
+						// 检索年
+						const yearPattern = /\d{4}年/g;
+						const yearMatch = item.text.match(yearPattern);
+						if (yearMatch) {
+							year = yearMatch[0].split('年')[0];
+						}
+						// 检索月
+						const monthPattern = /\d{1,2}月/g;
+						const monthMatch = item.text.match(monthPattern);
+						if (monthMatch) {
+							month = monthMatch[0].split('月')[0];
+						}
+						// 检索日
+						const dayPattern = /\d{1,2}日/g;
+						const dayMatch = item.text.match(dayPattern);
+						if (dayMatch) {
+							day = dayMatch[0].split('日')[0];
+						}
 					})
-					this.ocrResult = dateResult ? dateResult.text : "未识别到日期信息"
+					if (!month || !day) {
+						this.ocrResult = "未识别到日期信息"
+						return
+					}
+					this.ocrResult = year + "年" + month + "月" + day + "日"
 				}
 			})
 
