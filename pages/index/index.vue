@@ -1,5 +1,7 @@
 <template>
 	<view class="container">
+		<!-- 原生扫码 -->
+		<button type="primary" @click="openScan" style="margin-bottom: 10rpx;">扫码</button>
 		<button type="primary" @click="gotoWorkOrder">完工单完工日期录入&比对</button>
 		<image :src="imagesrc" style="width: 100%;" mode="widthFix"></image>
 		<view v-if="imagesrc">
@@ -70,7 +72,15 @@ export default {
 				}
 			});
 		},
+		openScan() {
+			uni.scanCode({
+				success: (res) => {
+					console.log("扫码结果", res);
+				}
+			})
+		},
 		gotoWorkOrder() {
+			this.imagesrc = null;
 			let mapList = [{
 				name: '相册',
 				methods: 'openPhoto'
@@ -95,7 +105,7 @@ export default {
 		openPhoto() {
 			uni.chooseImage({
 				count: 1,
-				sizeType: ['compressed'],
+				sizeType: ['original'],
 				sourceType: ['album'],
 				success: (res) => {
 					this.savePhoto(res.tempFilePaths[0])
@@ -108,7 +118,7 @@ export default {
 			// })
 			uni.chooseImage({
 				count: 1,
-				sizeType: ['compressed'],
+				sizeType: ['original'],
 				sourceType: ['camera'],
 				success: (res) => {
 					this.savePhoto(res.tempFilePaths[0])
@@ -121,16 +131,29 @@ export default {
 		},
 		//保存图片
 		async savePhoto(path) {
+			// 保存图片到手机
+			
+			// #ifdef APP-PLUS
+			uni.saveImageToPhotosAlbum({
+				filePath: path,
+				success: (res) => {
+					console.log("保存图片成功", res);
+				}
+			})
+			// #endif
+
 			this.imagesrc = path;
+			// 图片转换为base64
 			let base64 = await this.imgToBase64(path)
+			// 请求ocr接口
 			uni.request({
-				url: 'http://192.168.1.3:1224/api/ocr',
+				url: 'http://192.168.230.85:1224/api/ocr',
 				method: 'POST',
 				data: {
 					base64: base64
 				},
 				success: (res) => {
-					console.log("ocrResult", res);
+					console.log("ocr接口返回结果", res);
 
 					if (res.data.code != 100) {
 						this.ocrResult = "未识别到日期信息"
@@ -146,7 +169,9 @@ export default {
 					this.ocrResult = dateResult ? dateResult.text : "未识别到日期信息"
 				}
 			})
+
 			// #ifdef APP-PLUS
+			// 扫码识别日期信息
 			plus.barcode.scan(path, (type, res) => {
 				if (type == 0) {
 					uni.request({
