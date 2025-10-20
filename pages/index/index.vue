@@ -113,17 +113,17 @@ export default {
 			})
 		},
 		openCamera() {
-			// uni.navigateTo({
-			// 	url: '/pages/camera/index'
-			// })
-			uni.chooseImage({
-				count: 1,
-				sizeType: ['original'],
-				sourceType: ['camera'],
-				success: (res) => {
-					this.savePhoto(res.tempFilePaths[0])
-				}
+			uni.navigateTo({
+				url: '/pages/camera/index'
 			})
+			// uni.chooseImage({
+			// 	count: 1,
+			// 	sizeType: ['original'],
+			// 	sourceType: ['camera'],
+			// 	success: (res) => {
+			// 		this.savePhoto(res.tempFilePaths[0])
+			// 	}
+			// })
 		},
 		//设置图片
 		setImage(e) {
