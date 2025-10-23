@@ -9,8 +9,11 @@
 				<button type="primary" @click="handleScanMachineQRCode" style="margin-bottom: 10rpx;">扫描机器二维码</button>
 			</swiper-item>
 			<swiper-item>
-				<button type="primary" @click="captureMachinePlate">拍摄机器铭牌</button>
-				<image :src="imagesrc" style="width: 100%;" mode="widthFix"></image>
+				<view class="machine-plate" @click="captureMachinePlate" v-if="!imagesrc">
+					<image src="/static/image/photo.png" class="machine-plate-image"></image>
+					<view class="machine-plate-text">拍摄机器铭牌</view>
+				</view>
+				<image :src="imagesrc" style="width: 100%;" mode="widthFix" @click="captureMachinePlate"></image>
 			</swiper-item>
 		</swiper>
 		<canvas id="canvas-clipper" canvas-id="canvas-clipper" type="2d"
@@ -172,6 +175,7 @@ export default {
 				// 85 ocr
 				// url: 'http://192.168.230.85:1224/api/ocr',
 				method: 'POST',
+				timeout: 10000,
 				data: {
 					base64: base64
 				},
@@ -209,8 +213,8 @@ export default {
 						// ocr失败，弹窗确认
 						uni.showModal({
 							title: '请确认',
-							content: 'ocr识别失败，请您确认二维码日期是否正确',
-							confirmText: '提交工单',
+							content: `ocr识别失败，是否以二维码日期${this.formData.finishDate}录入完工单`,
+							confirmText: '录入',
 							cancelText: '取消',
 							success: (res) => {
 								if (res.confirm) {
@@ -225,8 +229,8 @@ export default {
 						// ocr失败，弹窗确认
 						uni.showModal({
 							title: '请确认',
-							content: 'ocr识别日期与完工单日期不一致，请您确认二维码日期是否正确',
-							confirmText: '提交工单',
+							content: `ocr识别日期与完工单日期不一致，是否以二维码日期${this.formData.finishDate}录入完工单`,
+							confirmText: '录入',
 							cancelText: '取消',
 							success: (res) => {
 								if (res.confirm) {
@@ -239,8 +243,22 @@ export default {
 					// ocr成功，弹窗确认
 					uni.showModal({
 						title: '请确认',
-						content: 'ocr识别日期与完工单日期一致，是否提交完工单',
-						confirmText: '提交工单',
+						content: `ocr识别日期与完工单日期一致，是否以日期${this.formData.finishDate}录入完工单`,
+						confirmText: '录入',
+						cancelText: '取消',
+						success: (res) => {
+							if (res.confirm) {
+								this.submitWorkOrder();
+							}
+						}
+					})
+				},
+				fail: (err) => {
+					// ocr识别失败，弹窗确认
+					uni.showModal({
+						title: '请确认',
+						content: `ocr识别失败，是否以二维码日期${this.formData.finishDate}录入完工单`,
+						confirmText: '录入',
 						cancelText: '取消',
 						success: (res) => {
 							if (res.confirm) {
@@ -260,13 +278,13 @@ export default {
 				success: (res) => {
 					if (!res.data.code) {
 						uni.showToast({
-							title: '完工单提交失败',
+							title: '录入失败',
 							icon: 'none'
 						})
 						return
 					}
 					uni.showToast({
-						title: '完工单提交成功',
+						title: '录入成功',
 						icon: 'success'
 					})
 
@@ -279,7 +297,7 @@ export default {
 				},
 				fail: (err) => {
 					uni.showToast({
-						title: '完工单提交失败',
+						title: '录入失败',
 						icon: 'none'
 					})
 				}
@@ -341,5 +359,28 @@ export default {
 
 .swiper-container {
 	height: 70vh;
+}
+
+.machine-plate {
+	background-color: #f8f8f8;
+	border-radius: 10rpx;
+
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-direction: column;
+
+	width: 100%;
+	height: 60vw;
+}
+
+.machine-plate-image {
+	width: 60rpx;
+	height: 60rpx;
+}
+
+.machine-plate-text {
+	font-size: 32rpx;
+	color: #999999;
 }
 </style>
