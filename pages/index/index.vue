@@ -178,7 +178,7 @@ export default {
 				success: (res) => {
 					if (res.data.code != 100) {
 						uni.showToast({
-							title: 'ocr识别失败',
+							title: '未识别到文字信息',
 							icon: 'none'
 						})
 						return
@@ -206,50 +206,81 @@ export default {
 						}
 					})
 					if (!month || !day) {
-						uni.showToast({
-							title: 'ocr识别失败',
-							icon: 'none'
+						// ocr失败，弹窗确认
+						uni.showModal({
+							title: '请确认',
+							content: 'ocr识别失败，请您确认二维码日期是否正确',
+							confirmText: '提交工单',
+							cancelText: '取消',
+							success: (res) => {
+								if (res.confirm) {
+									this.submitWorkOrder();
+								}
+							}
 						})
 						return
 					}
 					let ocrDate = year + "年" + month + "月" + day + "日"
 					if (ocrDate != this.formData.finishDate) {
+						// ocr失败，弹窗确认
+						uni.showModal({
+							title: '请确认',
+							content: 'ocr识别日期与完工单日期不一致，请您确认二维码日期是否正确',
+							confirmText: '提交工单',
+							cancelText: '取消',
+							success: (res) => {
+								if (res.confirm) {
+									this.submitWorkOrder();
+								}
+							}
+						})
+						return
+					}
+					// ocr成功，弹窗确认
+					uni.showModal({
+						title: '请确认',
+						content: 'ocr识别日期与完工单日期一致，是否提交完工单',
+						confirmText: '提交工单',
+						cancelText: '取消',
+						success: (res) => {
+							if (res.confirm) {
+								this.submitWorkOrder();
+							}
+						}
+					})
+				}
+			})
+		},
+		// 提交工单
+		submitWorkOrder() {
+			uni.request({
+				url: 'http://192.168.230.73:8888/yanmar/app/api/check/updateFinishDate',
+				method: 'POST',
+				data: this.formData,
+				success: (res) => {
+					if (!res.data.code) {
 						uni.showToast({
-							title: 'ocr识别日期与完工单日期不一致',
+							title: '完工单提交失败',
 							icon: 'none'
 						})
 						return
 					}
-					// 提交完工单
-					uni.request({
-						url: 'http://192.168.230.73:8888/yanmar/app/api/check/updateFinishDate',
-						method: 'POST',
-						data: this.formData,
-						success: (res) => {
-							if (!res.data.code) {
-								uni.showToast({
-									title: '完工单提交失败',
-									icon: 'none'
-								})
-								return
-							}
-							uni.showToast({
-								title: '完工单提交成功',
-								icon: 'success'
-							})
+					uni.showToast({
+						title: '完工单提交成功',
+						icon: 'success'
+					})
 
-							this.currentIndex = 0;
-							this.formData = {
-								productionControlNo: '',
-								finishDate: ''
-							}
-						},
-						fail: (err) => {
-							uni.showToast({
-								title: '完工单提交失败',
-								icon: 'none'
-							})
-						}
+					this.currentIndex = 0;
+					this.imagesrc = null;
+					this.formData = {
+						productionControlNo: '',
+						finishDate: ''
+					}
+				},
+				fail: (err) => {
+					uni.showToast({
+						title: '完工单提交失败',
+						icon: 'none'
 					})
 				}
 			})
