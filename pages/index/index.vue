@@ -22,6 +22,7 @@
 </template>
 
 <script>
+import permision from "@/common/permission.js"
 export default {
 	data() {
 		return {
@@ -38,8 +39,35 @@ export default {
 		};
 	},
 	methods: {
+		// 检查权限
+		async checkPermission() {
+			let status = permision.isIOS ? await permision.requestIOS('camera') :
+				await permision.requestAndroid('android.permission.CAMERA');
+
+			if (status === null || status === 1) {
+				status = 1;
+			} else {
+				uni.showModal({
+					content: "需要相机权限",
+					confirmText: "设置",
+					success: function(res) {
+						if (res.confirm) {
+							permision.gotoAppSetting();
+						}
+					}
+				})
+			}
+			return status;
+		},
 		// 扫描机器条码
-		handleScanMachineBarCode() {
+		async handleScanMachineBarCode() {
+			// #ifdef APP-PLUS
+			let status = await this.checkPermission();
+			if (status !== 1) {
+				return;
+			}
+			// #endif
+
 			uni.scanCode({
 				scanType: ['barCode'],
 				success: (res) => {
