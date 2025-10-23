@@ -1,12 +1,14 @@
 {
 	"pages": [
 		{
-			"path": "pages/index/index"
+			"path": "pages/index/index",
+			"style": {
+				"navigationBarTitleText": "完工单完工日期录入&比对"
+			}
 		},
 		{
             "path" : "pages/camera/index",
-            "style" :                                                                                    
-            {
+            "style" : {
 				"navigationStyle":"custom",
 				"backgroundColor":"#000000"
             }

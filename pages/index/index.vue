@@ -1,21 +1,18 @@
 <template>
-	<view class="container">
-		<!-- 原生扫码 -->
-		<button type="primary" @click="openScan" style="margin-bottom: 10rpx;">扫码</button>
-		<button type="primary" @click="gotoWorkOrder">完工单完工日期录入&比对</button>
-		<image :src="imagesrc" style="width: 100%;" mode="widthFix"></image>
-		<view v-if="imagesrc">
-			<!-- #ifdef APP-PLUS -->
-			<view>
-				<text>扫码结果:</text>
-				<text>{{ scanfResult || '识别中...' }}</text>
-			</view>
-			<!-- #endif -->
-			<view>
-				<text>ocr结果:</text>
-				<text>{{ ocrResult || '识别中...' }}</text>
-			</view>
-		</view>
+	<view class="app-container">
+		<fa-steps :active="currentIndex"></fa-steps>
+		<swiper :autoplay="false" :disable-touch="true" :current="currentIndex" class="swiper-container">
+			<swiper-item>
+				<button type="primary" @click="handleScanMachineBarCode" style="margin-bottom: 10rpx;">扫描机器条码</button>
+			</swiper-item>
+			<swiper-item>
+				<button type="primary" @click="handleScanMachineQRCode" style="margin-bottom: 10rpx;">扫描机器二维码</button>
+			</swiper-item>
+			<swiper-item>
+				<button type="primary" @click="captureMachinePlate">拍摄机器铭牌</button>
+				<image :src="imagesrc" style="width: 100%;" mode="widthFix"></image>
+			</swiper-item>
+		</swiper>
 		<canvas id="canvas-clipper" canvas-id="canvas-clipper" type="2d"
 			:style="{ width: canvasSize.width + 'px', height: canvasSize.height + 'px', position: 'absolute', left: '-500000px', top: '-500000px' }" />
 	</view>
@@ -25,21 +22,110 @@
 export default {
 	data() {
 		return {
-			// 图片路径
+			currentIndex: 0,
 			imagesrc: null,
-			// 扫描结果
-			scanfResult: '',
-			// ocr结果
-			ocrResult: '',
 			canvasSize: {
 				width: 300,
 				height: 200
+			},
+			formData: {
+				productionControlNo: '',
+				finishDate: ''
 			}
 		};
 	},
 	methods: {
-		//证件照裁切
-		zjzClipper(path) {
+		// 扫描机器条码
+		handleScanMachineBarCode() {
+			uni.scanCode({
+				scanType: ['barCode'],
+				success: (res) => {
+					if (res.result) {
+						console.log("条码扫描结果", res.result);
+
+						this.formData.productionControlNo = res.result;
+						uni.showToast({
+							title: '机器条码扫描成功',
+							icon: 'none'
+						})
+						setTimeout(() => {
+							this.currentIndex = 1;
+						}, 500);
+					}
+					else {
+						uni.showToast({
+							title: '条码扫描失败',
+							icon: 'none'
+						})
+					}
+				}
+			})
+		},
+		// 扫描机器二维码
+		handleScanMachineQRCode() {
+			uni.scanCode({
+				scanType: ['qrCode'],
+				success: (res) => {
+					let dateUrl = res.result;
+					if (dateUrl) {
+						console.log("二维码扫描结果", dateUrl);
+
+						uni.request({
+							url: dateUrl,
+							method: 'GET',
+							header: {
+								'Content-Type': 'application/json'
+							},
+							success: (res) => {
+								console.log("二维码解析结果", res);
+
+								const datePattern = /\d{4}年\d{1,2}月\d{1,2}日/g;
+								const match = res.data.match(datePattern);
+								if (match) {
+									this.formData.finishDate = match[0];
+									uni.showToast({
+										title: '日期识别成功',
+										icon: 'none'
+									})
+									setTimeout(() => {
+										this.currentIndex = 2;
+									}, 500);
+								} else {
+									uni.showToast({
+										title: '未识别到日期信息',
+										icon: 'none'
+									})
+								}
+							},
+							fail: (err) => {
+								uni.showToast({
+									title: '二维码解析失败',
+									icon: 'none'
+								})
+							}
+						})
+					} else {
+						uni.showToast({
+							title: '二维码扫描失败',
+							icon: 'none'
+						})
+					}
+				}
+			})
+		},
+		// 拍摄机器铭牌
+		captureMachinePlate() {
+			uni.navigateTo({
+				url: '/pages/camera/index'
+			})
+		},
+		// 拍摄回调函数
+		setImage(e) {
+			// 证件照裁切
+			this.clipper(e.path);
+		},
+		// 证件照裁切
+		clipper(path) {
 			uni.getImageInfo({
 				src: path,
 				success: (image) => {
@@ -74,95 +160,31 @@ export default {
 				}
 			});
 		},
-		openScan() {
-			uni.scanCode({
-				success: (res) => {
-					console.log("扫码结果", res);
-				}
-			})
-		},
-		gotoWorkOrder() {
-			this.imagesrc = null;
-			let mapList = [{
-				name: '相册',
-				methods: 'openPhoto'
-			},
-			// #ifdef APP-PLUS
-			{
-				name: '拍摄',
-				methods: 'openCamera'
-			},
-				// #endif
-			]
-			// 提供用户选择地图的弹窗
-			uni.showActionSheet({
-				itemList: mapList.map(res => res.name),
-				success: (res) => {
-					this.ocrResult = '';
-					this.scanfResult = '';
-					this[mapList[res.tapIndex].methods]()
-				}
-			});
-		},
-		openPhoto() {
-			uni.chooseImage({
-				count: 1,
-				sizeType: ['compressed'], // 压缩
-				sourceType: ['album'],
-				success: (res) => {
-					this.savePhoto(res.tempFilePaths[0])
-				}
-			})
-		},
-		openCamera() {
-			uni.navigateTo({
-				url: '/pages/camera/index'
-			})
-			// uni.chooseImage({
-			// 	count: 1,
-			// 	sizeType: ['original','compressed'],
-			// 	sourceType: ['camera'],
-			// 	success: (res) => {
-			// 		this.savePhoto(res.tempFilePaths[0])
-			// 	}
-			// })
-		},
-		//设置图片
-		setImage(e) {
-			this.zjzClipper(e.path);
-		},
-		//保存图片
+		// 图片上传ocr 识别
 		async savePhoto(path) {
-			// 保存图片到手机
-			
-			// #ifdef APP-PLUS
-			uni.saveImageToPhotosAlbum({
-				filePath: path,
-				success: (res) => {
-					console.log("保存图片成功", res);
-				}
-			})
-			// #endif
-
 			this.imagesrc = path;
 			// 图片转换为base64
 			let base64 = await this.imgToBase64(path)
 			// 请求ocr接口
 			uni.request({
-				url: 'http://192.168.230.85:1224/api/ocr',
+				// 本地ocr
+				url: 'http://192.168.123.123:1224/api/ocr',
+				// 85 ocr
+				// url: 'http://192.168.230.85:1224/api/ocr',
 				method: 'POST',
 				data: {
 					base64: base64
 				},
 				success: (res) => {
-					console.log("ocr接口返回结果", res);
-
 					if (res.data.code != 100) {
-						this.ocrResult = "未识别到日期信息"
+						uni.showToast({
+							title: 'ocr识别失败',
+							icon: 'none'
+						})
 						return
 					}
 					// 识别日期信息, 默认当前年
-					let year = new Date().getFullYear(),month = "",day = "";
+					let year = new Date().getFullYear(), month = "", day = "";
 					res.data.data.forEach(item => {
 						// 检索年
 						const yearPattern = /\d{4}年/g;
@@ -184,34 +206,53 @@ export default {
 						}
 					})
 					if (!month || !day) {
-						this.ocrResult = "未识别到日期信息"
+						uni.showToast({
+							title: 'ocr识别失败',
+							icon: 'none'
+						})
 						return
 					}
-					this.ocrResult = year + "年" + month + "月" + day + "日"
-				}
-			})
-
-			// #ifdef APP-PLUS
-			// 扫码识别日期信息
-			plus.barcode.scan(path, (type, res) => {
-				if (type == 0) {
+					let ocrDate = year + "年" + month + "月" + day + "日"
+					if (ocrDate != this.formData.finishDate) {
+						uni.showToast({
+							title: 'ocr识别日期与完工单日期不一致',
+							icon: 'none'
+						})
+						return
+					}
+					// 提交完工单
 					uni.request({
-						url: res,
-						method: 'GET',
-						header: {
-							'Content-Type': 'application/json'
-						},
+						url: 'http://192.168.230.73:8888/yanmar/app/api/check/updateFinishDate',
+						method: 'POST',
+						data: this.formData,
 						success: (res) => {
-							const datePattern = /\d{4}年\d{1,2}月\d{1,2}日/g;
-							const match = res.data.match(datePattern);
-							this.scanfResult = match ? match[0] : '日期未找到';
+							if (!res.data.code) {
+								uni.showToast({
+									title: '完工单提交失败',
+									icon: 'none'
+								})
+								return
+							}
+							uni.showToast({
+								title: '完工单提交成功',
+								icon: 'success'
+							})
+
+							this.currentIndex = 0;
+							this.formData = {
+								productionControlNo: '',
+								finishDate: ''
+							}
+						},
+						fail: (err) => {
+							uni.showToast({
+								title: '完工单提交失败',
+								icon: 'none'
+							})
 						}
 					})
 				}
-			}, (e) => {
-				this.scanfResult = '无法识别此日期信息';
 			})
-			// #endif
 		},
 		// 图片转换为base64
 		imgToBase64(url) {
@@ -262,8 +303,12 @@ export default {
 };
 </script>
 
-<style lang="scss">
-.container {
+<style scoped>
+.app-container {
 	padding: 20rpx;
+}
+
+.swiper-container {
+	height: 70vh;
 }
 </style>

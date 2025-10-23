@@ -262,45 +262,33 @@ var render = function () {
         },
         [_vm._v("扫码")]
       ),
-      _c(
-        "v-uni-button",
-        {
-          attrs: { type: "primary", _i: 2 },
-          on: {
-            click: function ($event) {
-              return _vm.$handleViewEvent($event)
-            },
-          },
-        },
-        [_vm._v("完工单完工日期录入&比对")]
-      ),
       _c("v-uni-image", {
         staticStyle: { width: "100%" },
-        attrs: { src: _vm._$g(3, "a-src"), mode: "widthFix", _i: 3 },
+        attrs: { src: _vm._$g(2, "a-src"), mode: "widthFix", _i: 2 },
       }),
-      _vm._$g(4, "i")
+      _vm._$g(3, "i")
         ? _c(
             "uni-view",
-            { attrs: { _i: 4 } },
+            { attrs: { _i: 3 } },
             [
               _c(
                 "uni-view",
-                { attrs: { _i: 5 } },
+                { attrs: { _i: 4 } },
                 [
-                  _c("v-uni-text", { attrs: { _i: 6 } }, [_vm._v("扫码结果:")]),
-                  _c("v-uni-text", { attrs: { _i: 7 } }, [
-                    _vm._v(_vm._$g(7, "t0-0")),
+                  _c("v-uni-text", { attrs: { _i: 5 } }, [_vm._v("扫码结果:")]),
+                  _c("v-uni-text", { attrs: { _i: 6 } }, [
+                    _vm._v(_vm._$g(6, "t0-0")),
                   ]),
                 ],
                 1
               ),
               _c(
                 "uni-view",
-                { attrs: { _i: 8 } },
+                { attrs: { _i: 7 } },
                 [
-                  _c("v-uni-text", { attrs: { _i: 9 } }, [_vm._v("ocr结果:")]),
-                  _c("v-uni-text", { attrs: { _i: 10 } }, [
-                    _vm._v(_vm._$g(10, "t0-0")),
+                  _c("v-uni-text", { attrs: { _i: 8 } }, [_vm._v("ocr结果:")]),
+                  _c("v-uni-text", { attrs: { _i: 9 } }, [
+                    _vm._v(_vm._$g(9, "t0-0")),
                   ]),
                 ],
                 1
@@ -310,12 +298,12 @@ var render = function () {
           )
         : _vm._e(),
       _c("v-uni-canvas", {
-        style: _vm._$g(11, "s"),
+        style: _vm._$g(10, "s"),
         attrs: {
           id: "canvas-clipper",
           "canvas-id": "canvas-clipper",
           type: "2d",
-          _i: 11,
+          _i: 10,
         },
       }),
     ],
