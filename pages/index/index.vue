@@ -354,7 +354,7 @@ export default {
 
 <style scoped>
 .app-container {
-	padding: 20rpx;
+	padding: 0 32rpx;
 }
 
 .swiper-container {

@@ -1272,7 +1272,7 @@ if(false) {}
 var ___CSS_LOADER_API_IMPORT___ = __webpack_require__(/*! ../../../../../../../../../Applications/HBuilderX.app/Contents/HBuilderX/plugins/uniapp-cli/node_modules/css-loader/dist/runtime/api.js */ 13);
 exports = ___CSS_LOADER_API_IMPORT___(false);
 // Module
-exports.push([module.i, "\n.app-container[data-v-2be84a3c] {\n\tpadding: 20rpx;\n}\n.swiper-container[data-v-2be84a3c] {\n\theight: 70vh;\n}\n.machine-plate[data-v-2be84a3c] {\n\tbackground-color: #f8f8f8;\n\tborder-radius: 10rpx;\n\n\tdisplay: flex;\n\tjustify-content: center;\n\talign-items: center;\n\tflex-direction: column;\n\n\twidth: 100%;\n\theight: 60vw;\n}\n.machine-plate-image[data-v-2be84a3c] {\n\twidth: 60rpx;\n\theight: 60rpx;\n}\n.machine-plate-text[data-v-2be84a3c] {\n\tfont-size: 32rpx;\n\tcolor: #999999;\n}\n", ""]);
+exports.push([module.i, "\n.app-container[data-v-2be84a3c] {\n\tpadding: 0 32rpx;\n}\n.swiper-container[data-v-2be84a3c] {\n\theight: 70vh;\n}\n.machine-plate[data-v-2be84a3c] {\n\tbackground-color: #f8f8f8;\n\tborder-radius: 10rpx;\n\n\tdisplay: flex;\n\tjustify-content: center;\n\talign-items: center;\n\tflex-direction: column;\n\n\twidth: 100%;\n\theight: 60vw;\n}\n.machine-plate-image[data-v-2be84a3c] {\n\twidth: 60rpx;\n\theight: 60rpx;\n}\n.machine-plate-text[data-v-2be84a3c] {\n\tfont-size: 32rpx;\n\tcolor: #999999;\n}\n", ""]);
 // Exports
 module.exports = exports;
 
