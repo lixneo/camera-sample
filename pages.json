@@ -1,19 +1,29 @@
 {
-	"pages": [
-		{
+	"pages": [{
 			"path": "pages/index/index",
 			"style": {
-				"navigationBarTitleText": "完工单完工日期录入&比对"
+				"navigationBarTitleText": "完工单完工日期录入&比对",
+				"app-plus": {
+					"titleNView": {
+						"buttons": [
+							{
+								"text": "重录",
+								"fontSize": "16px",
+								"color": "#CA1E30"
+							}
+						]
+					}
+				}
 			}
 		},
 		{
-            "path" : "pages/camera/index",
-            "style" : {
-				"navigationStyle":"custom",
-				"backgroundColor":"#000000"
-            }
-        }
-    ],
+			"path": "pages/camera/index",
+			"style": {
+				"navigationStyle": "custom",
+				"backgroundColor": "#000000"
+			}
+		}
+	],
 	"globalStyle": {
 		"navigationBarTextStyle": "black",
 		"navigationBarTitleText": "",

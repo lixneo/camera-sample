@@ -3,10 +3,12 @@
 		<fa-steps :active="currentIndex"></fa-steps>
 		<swiper :autoplay="false" :disable-touch="true" :current="currentIndex" class="swiper-container">
 			<swiper-item>
-				<button type="primary" class="custom-btn"  @click="handleScanMachineBarCode" style="margin-bottom: 10rpx;">扫描机器条码</button>
+				<button type="primary" class="custom-btn" @click="handleScanMachineBarCode"
+					style="margin-bottom: 10rpx;">扫描机器条码</button>
 			</swiper-item>
 			<swiper-item>
-				<button type="primary" class="custom-btn" @click="handleScanMachineQRCode" style="margin-bottom: 10rpx;">扫描机器二维码</button>
+				<button type="primary" class="custom-btn" @click="handleScanMachineQRCode"
+					style="margin-bottom: 10rpx;">扫描机器二维码</button>
 			</swiper-item>
 			<swiper-item>
 				<view class="machine-plate" @click="captureMachinePlate" v-if="!imagesrc">
@@ -22,223 +24,284 @@
 </template>
 
 <script>
-import permision from "@/common/permission.js"
-export default {
-	data() {
-		return {
-			currentIndex: 0,
-			imagesrc: null,
-			canvasSize: {
-				width: 300,
-				height: 200
-			},
-			formData: {
-				productionControlNo: '',
-				finishDate: ''
-			}
-		};
-	},
-	methods: {
-		// 检查权限
-		async checkPermission() {
-			let status = permision.isIOS ? await permision.requestIOS('camera') :
-				await permision.requestAndroid('android.permission.CAMERA');
+	import permision from "@/common/permission.js"
+	export default {
+		data() {
+			return {
+				currentIndex: 0,
+				imagesrc: null,
+				canvasSize: {
+					width: 300,
+					height: 200
+				},
+				formData: {
+					productionControlNo: '',
+					finishDate: ''
+				}
+			};
+		},
+		onNavigationBarButtonTap(e) {
+			//在里边添加想要的代码
+			uni.showModal({
+				title: '请确认',
+				content: '是否重录',
+				confirmText: '重录',
+				cancelText: '取消',
+				success: (res) => {
+					if (res.confirm) {
+						uni.reLaunch({
+							url: '/pages/index/index'
+						})
+					}
+				}
+			})
+		},
+		methods: {
+			// 检查权限
+			async checkPermission() {
+				let status = permision.isIOS ? await permision.requestIOS('camera') :
+					await permision.requestAndroid('android.permission.CAMERA');
 
-			if (status === null || status === 1) {
-				status = 1;
-			} else {
-				uni.showModal({
-					content: "需要相机权限",
-					confirmText: "设置",
-					success: function(res) {
-						if (res.confirm) {
-							permision.gotoAppSetting();
+				if (status === null || status === 1) {
+					status = 1;
+				} else {
+					uni.showModal({
+						content: "需要相机权限",
+						confirmText: "设置",
+						success: function(res) {
+							if (res.confirm) {
+								permision.gotoAppSetting();
+							}
+						}
+					})
+				}
+				return status;
+			},
+			// 扫描机器条码
+			async handleScanMachineBarCode() {
+				// #ifdef APP-PLUS
+				let status = await this.checkPermission();
+				if (status !== 1) {
+					return;
+				}
+				// #endif
+
+				uni.scanCode({
+					scanType: ['barCode'],
+					success: (res) => {
+						if (res.result) {
+							console.log("条码扫描结果", res.result);
+
+							this.formData.productionControlNo = res.result;
+							uni.showToast({
+								title: '机器条码扫描成功',
+								icon: 'none'
+							})
+							setTimeout(() => {
+								this.currentIndex = 1;
+							}, 500);
+						} else {
+							uni.showToast({
+								title: '条码扫描失败',
+								icon: 'none'
+							})
 						}
 					}
 				})
-			}
-			return status;
-		},
-		// 扫描机器条码
-		async handleScanMachineBarCode() {
-			// #ifdef APP-PLUS
-			let status = await this.checkPermission();
-			if (status !== 1) {
-				return;
-			}
-			// #endif
+			},
+			// 扫描机器二维码
+			handleScanMachineQRCode() {
+				uni.scanCode({
+					scanType: ['qrCode'],
+					success: (res) => {
+						let dateUrl = res.result;
+						if (dateUrl) {
+							console.log("二维码扫描结果", dateUrl);
 
-			uni.scanCode({
-				scanType: ['barCode'],
-				success: (res) => {
-					if (res.result) {
-						console.log("条码扫描结果", res.result);
+							uni.request({
+								url: dateUrl,
+								method: 'GET',
+								header: {
+									'Content-Type': 'application/json'
+								},
+								success: (res) => {
+									console.log("二维码解析结果", res);
 
-						this.formData.productionControlNo = res.result;
-						uni.showToast({
-							title: '机器条码扫描成功',
-							icon: 'none'
-						})
-						setTimeout(() => {
-							this.currentIndex = 1;
-						}, 500);
-					}
-					else {
-						uni.showToast({
-							title: '条码扫描失败',
-							icon: 'none'
-						})
-					}
-				}
-			})
-		},
-		// 扫描机器二维码
-		handleScanMachineQRCode() {
-			uni.scanCode({
-				scanType: ['qrCode'],
-				success: (res) => {
-					let dateUrl = res.result;
-					if (dateUrl) {
-						console.log("二维码扫描结果", dateUrl);
-
-						uni.request({
-							url: dateUrl,
-							method: 'GET',
-							header: {
-								'Content-Type': 'application/json'
-							},
-							success: (res) => {
-								console.log("二维码解析结果", res);
-
-								const datePattern = /\d{4}年\d{1,2}月\d{1,2}日/g;
-								const match = res.data.match(datePattern);
-								if (match) {
-									this.formData.finishDate = match[0];
+									const datePattern = /\d{4}年\d{1,2}月\d{1,2}日/g;
+									const match = res.data.match(datePattern);
+									if (match) {
+										this.formData.finishDate = match[0];
+										uni.showToast({
+											title: '日期识别成功',
+											icon: 'none'
+										})
+										setTimeout(() => {
+											this.currentIndex = 2;
+										}, 500);
+									} else {
+										uni.showToast({
+											title: '未识别到日期信息',
+											icon: 'none'
+										})
+									}
+								},
+								fail: (err) => {
 									uni.showToast({
-										title: '日期识别成功',
-										icon: 'none'
-									})
-									setTimeout(() => {
-										this.currentIndex = 2;
-									}, 500);
-								} else {
-									uni.showToast({
-										title: '未识别到日期信息',
+										title: '二维码解析失败',
 										icon: 'none'
 									})
 								}
-							},
-							fail: (err) => {
-								uni.showToast({
-									title: '二维码解析失败',
-									icon: 'none'
-								})
-							}
-						})
-					} else {
-						uni.showToast({
-							title: '二维码扫描失败',
-							icon: 'none'
-						})
+							})
+						} else {
+							uni.showToast({
+								title: '二维码扫描失败',
+								icon: 'none'
+							})
+						}
 					}
-				}
-			})
-		},
-		// 拍摄机器铭牌
-		captureMachinePlate() {
-			uni.navigateTo({
-				url: '/pages/camera/index'
-			})
-		},
-		// 拍摄回调函数
-		setImage(e) {
+				})
+			},
+			// 拍摄机器铭牌
+			captureMachinePlate() {
+				uni.navigateTo({
+					url: '/pages/camera/index'
+				})
+			},
+			// 拍摄回调函数
+			setImage(e) {
+				// 证件照裁切
+				this.clipper(e.path);
+			},
 			// 证件照裁切
-			this.clipper(e.path);
-		},
-		// 证件照裁切
-		clipper(path) {
-			uni.getImageInfo({
-				src: path,
-				success: (image) => {
-					//因为nvue页面使用canvas比较麻烦，所以在此页面上处理图片
-					let ctx = uni.createCanvasContext('canvas-clipper', this);
+			clipper(path) {
+				uni.getImageInfo({
+					src: path,
+					success: (image) => {
+						//因为nvue页面使用canvas比较麻烦，所以在此页面上处理图片
+						let ctx = uni.createCanvasContext('canvas-clipper', this);
 
-					ctx.drawImage(
-						path,
-						parseInt(0.07 * image.width),
-						parseInt(0.28 * image.height),
-						parseInt(0.86 * image.width),
-						parseInt(0.40 * image.height),
-						0,
-						0,
-						this.canvasSize.width,
-						this.canvasSize.height
-					);
-
-					ctx.draw(false, () => {
-						uni.canvasToTempFilePath({
-							destWidth: this.canvasSize.width * 2,
-							destHeight: this.canvasSize.height * 2,
-							canvasId: 'canvas-clipper',
-							fileType: 'jpg',
-							success: (res) => {
-								this.savePhoto(res.tempFilePath);
-							}
-						},
-							this
+						ctx.drawImage(
+							path,
+							parseInt(0.07 * image.width),
+							parseInt(0.28 * image.height),
+							parseInt(0.86 * image.width),
+							parseInt(0.40 * image.height),
+							0,
+							0,
+							this.canvasSize.width,
+							this.canvasSize.height
 						);
-					});
-				}
-			});
-		},
-		// 图片上传ocr 识别
-		async savePhoto(path) {
-			this.imagesrc = path;
-			// 图片转换为base64
-			let base64 = await this.imgToBase64(path)
-			// 请求ocr接口
-			uni.request({
-				// 本地ocr
-				url: 'http://192.168.1.3:1224/api/ocr',
-				// 85 ocr
-				// url: 'http://192.168.230.85:1224/api/ocr',
-				method: 'POST',
-				timeout: 10000,
-				data: {
-					base64: base64
-				},
-				success: (res) => {
-					if (res.data.code != 100) {
-						uni.showToast({
-							title: '未识别到文字信息',
-							icon: 'none'
-						})
-						return
+
+						ctx.draw(false, () => {
+							uni.canvasToTempFilePath({
+									destWidth: this.canvasSize.width * 2,
+									destHeight: this.canvasSize.height * 2,
+									canvasId: 'canvas-clipper',
+									fileType: 'jpg',
+									success: (res) => {
+										this.savePhoto(res.tempFilePath);
+									}
+								},
+								this
+							);
+						});
 					}
-					// 识别日期信息, 默认当前年
-					let year = new Date().getFullYear(), month = "", day = "";
-					res.data.data.forEach(item => {
-						// 检索年
-						const yearPattern = /\d{4}年/g;
-						const yearMatch = item.text.match(yearPattern);
-						if (yearMatch) {
-							year = yearMatch[0].split('年')[0];
+				});
+			},
+			// 图片上传ocr 识别
+			async savePhoto(path) {
+				this.imagesrc = path;
+				// 图片转换为base64
+				let base64 = await this.imgToBase64(path)
+				// 请求ocr接口
+				uni.request({
+					// 本地ocr
+					url: 'http://192.168.1.3:1224/api/ocr',
+					// 85 ocr
+					// url: 'http://192.168.230.85:1224/api/ocr',
+					method: 'POST',
+					timeout: 10000,
+					data: {
+						base64: base64
+					},
+					success: (res) => {
+						if (res.data.code != 100) {
+							uni.showToast({
+								title: '未识别到文字信息',
+								icon: 'none'
+							})
+							return
 						}
-						// 检索月
-						const monthPattern = /\d{1,2}月/g;
-						const monthMatch = item.text.match(monthPattern);
-						if (monthMatch) {
-							month = monthMatch[0].split('月')[0];
+						// 识别日期信息, 默认当前年
+						let year = new Date().getFullYear(),
+							month = "",
+							day = "";
+						res.data.data.forEach(item => {
+							// 检索年
+							const yearPattern = /\d{4}年/g;
+							const yearMatch = item.text.match(yearPattern);
+							if (yearMatch) {
+								year = yearMatch[0].split('年')[0];
+							}
+							// 检索月
+							const monthPattern = /\d{1,2}月/g;
+							const monthMatch = item.text.match(monthPattern);
+							if (monthMatch) {
+								month = monthMatch[0].split('月')[0];
+							}
+							// 检索日
+							const dayPattern = /\d{1,2}日/g;
+							const dayMatch = item.text.match(dayPattern);
+							if (dayMatch) {
+								day = dayMatch[0].split('日')[0];
+							}
+						})
+						if (!month || !day) {
+							// ocr失败，弹窗确认
+							uni.showModal({
+								title: '请确认',
+								content: `ocr识别失败，是否以二维码日期${this.formData.finishDate}录入完工单`,
+								confirmText: '录入',
+								cancelText: '取消',
+								success: (res) => {
+									if (res.confirm) {
+										this.submitWorkOrder();
+									}
+								}
+							})
+							return
 						}
-						// 检索日
-						const dayPattern = /\d{1,2}日/g;
-						const dayMatch = item.text.match(dayPattern);
-						if (dayMatch) {
-							day = dayMatch[0].split('日')[0];
+						let ocrDate = year + "年" + month + "月" + day + "日"
+						if (ocrDate != this.formData.finishDate) {
+							// ocr失败，弹窗确认
+							uni.showModal({
+								title: '请确认',
+								content: `ocr识别日期与完工单日期不一致，是否以二维码日期${this.formData.finishDate}录入完工单`,
+								confirmText: '录入',
+								cancelText: '取消',
+								success: (res) => {
+									if (res.confirm) {
+										this.submitWorkOrder();
+									}
+								}
+							})
+							return
 						}
-					})
-					if (!month || !day) {
-						// ocr失败，弹窗确认
+						// ocr成功，弹窗确认
+						uni.showModal({
+							title: '请确认',
+							content: `ocr识别日期与完工单日期一致，是否以日期${this.formData.finishDate}录入完工单`,
+							confirmText: '录入',
+							cancelText: '取消',
+							success: (res) => {
+								if (res.confirm) {
+									this.submitWorkOrder();
+								}
+							}
+						})
+					},
+					fail: (err) => {
+						// ocr识别失败，弹窗确认
 						uni.showModal({
 							title: '请确认',
 							content: `ocr识别失败，是否以二维码日期${this.formData.finishDate}录入完工单`,
@@ -250,173 +313,133 @@ export default {
 								}
 							}
 						})
-						return
 					}
-					let ocrDate = year + "年" + month + "月" + day + "日"
-					if (ocrDate != this.formData.finishDate) {
-						// ocr失败，弹窗确认
-						uni.showModal({
-							title: '请确认',
-							content: `ocr识别日期与完工单日期不一致，是否以二维码日期${this.formData.finishDate}录入完工单`,
-							confirmText: '录入',
-							cancelText: '取消',
-							success: (res) => {
-								if (res.confirm) {
-									this.submitWorkOrder();
-								}
-							}
+				})
+			},
+			// 提交工单
+			submitWorkOrder() {
+				uni.request({
+					url: 'http://192.168.230.73:8888/yanmar/app/api/check/updateFinishDate',
+					method: 'POST',
+					data: this.formData,
+					success: (res) => {
+						if (!res.data.code) {
+							uni.showToast({
+								title: '录入失败',
+								icon: 'none'
+							})
+							return
+						}
+						uni.showToast({
+							title: '录入成功',
+							icon: 'success'
 						})
-						return
-					}
-					// ocr成功，弹窗确认
-					uni.showModal({
-						title: '请确认',
-						content: `ocr识别日期与完工单日期一致，是否以日期${this.formData.finishDate}录入完工单`,
-						confirmText: '录入',
-						cancelText: '取消',
-						success: (res) => {
-							if (res.confirm) {
-								this.submitWorkOrder();
-							}
+
+						this.currentIndex = 0;
+						this.imagesrc = null;
+						this.formData = {
+							productionControlNo: '',
+							finishDate: ''
 						}
-					})
-				},
-				fail: (err) => {
-					// ocr识别失败，弹窗确认
-					uni.showModal({
-						title: '请确认',
-						content: `ocr识别失败，是否以二维码日期${this.formData.finishDate}录入完工单`,
-						confirmText: '录入',
-						cancelText: '取消',
-						success: (res) => {
-							if (res.confirm) {
-								this.submitWorkOrder();
-							}
-						}
-					})
-				}
-			})
-		},
-		// 提交工单
-		submitWorkOrder() {
-			uni.request({
-				url: 'http://192.168.230.73:8888/yanmar/app/api/check/updateFinishDate',
-				method: 'POST',
-				data: this.formData,
-				success: (res) => {
-					if (!res.data.code) {
+					},
+					fail: (err) => {
 						uni.showToast({
 							title: '录入失败',
 							icon: 'none'
 						})
-						return
-					}
-					uni.showToast({
-						title: '录入成功',
-						icon: 'success'
-					})
-
-					this.currentIndex = 0;
-					this.imagesrc = null;
-					this.formData = {
-						productionControlNo: '',
-						finishDate: ''
-					}
-				},
-				fail: (err) => {
-					uni.showToast({
-						title: '录入失败',
-						icon: 'none'
-					})
-				}
-			})
-		},
-		// 图片转换为base64
-		imgToBase64(url) {
-			return new Promise((resolve, reject) => {
-				// #ifdef MP-WEIXIN
-				uni.getFileSystemManager().readFile({
-					filePath: url, //选择图片返回的相对路径
-					encoding: 'base64', //编码格式
-					success: res => { //成功的回调
-						resolve(res.data)
-					},
-					fail: (e) => {
-						console.log("图片转换失败");
 					}
 				})
-				// #endif
-				// #ifdef H5
-				uni.request({
-					url: url,
-					method: 'GET',
-					responseType: 'arraybuffer',
-					success: ress => {
-						let base64 = uni.arrayBufferToBase64(ress.data); //把arraybuffer转成base64
-						resolve(base64)
-					},
-					fail: (e) => {
-						console.log("图片转换失败");
-					}
-				})
-				// #endif
-				// #ifdef APP-PLUS
-				plus.io.resolveLocalFileSystemURL(url, (entry) => {
-					// 可通过entry对象操作test.html文件 
-					entry.file((file) => {
-						let fileReader = new plus.io.FileReader();
-						fileReader.onloadend = (evt) => {
-							resolve(evt.target.result.split("base64,")[1])
+			},
+			// 图片转换为base64
+			imgToBase64(url) {
+				return new Promise((resolve, reject) => {
+					// #ifdef MP-WEIXIN
+					uni.getFileSystemManager().readFile({
+						filePath: url, //选择图片返回的相对路径
+						encoding: 'base64', //编码格式
+						success: res => { //成功的回调
+							resolve(res.data)
+						},
+						fail: (e) => {
+							console.log("图片转换失败");
 						}
-						fileReader.readAsDataURL(file);
+					})
+					// #endif
+					// #ifdef H5
+					uni.request({
+						url: url,
+						method: 'GET',
+						responseType: 'arraybuffer',
+						success: ress => {
+							let base64 = uni.arrayBufferToBase64(ress.data); //把arraybuffer转成base64
+							resolve(base64)
+						},
+						fail: (e) => {
+							console.log("图片转换失败");
+						}
+					})
+					// #endif
+					// #ifdef APP-PLUS
+					plus.io.resolveLocalFileSystemURL(url, (entry) => {
+						// 可通过entry对象操作test.html文件 
+						entry.file((file) => {
+							let fileReader = new plus.io.FileReader();
+							fileReader.onloadend = (evt) => {
+								resolve(evt.target.result.split("base64,")[1])
+							}
+							fileReader.readAsDataURL(file);
+						});
+					}, (e) => {
+						alert("Resolve file URL failed: " + e.message);
 					});
-				}, (e) => {
-					alert("Resolve file URL failed: " + e.message);
-				});
-				// #endif
-			})
+					// #endif
+				})
+			}
 		}
-	}
-};
+	};
 </script>
 
 <style scoped>
-.app-container {
-	padding: 0 32rpx;
-}
+	.app-container {
+		padding: 0 32rpx;
+	}
 
-.swiper-container {
-	height: 70vh;
-}
+	.swiper-container {
+		height: 70vh;
+	}
 
-.machine-plate {
-	background-color: #f8f8f8;
-	border-radius: 10rpx;
+	.machine-plate {
+		background-color: #f8f8f8;
+		border-radius: 10rpx;
 
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	flex-direction: column;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		flex-direction: column;
 
-	width: 100%;
-	height: 60vw;
-}
+		width: 100%;
+		height: 60vw;
+	}
 
-.machine-plate-image {
-	width: 60rpx;
-	height: 60rpx;
-}
+	.machine-plate-image {
+		width: 60rpx;
+		height: 60rpx;
+	}
 
-.machine-plate-text {
-	font-size: 32rpx;
-	color: #999999;
-}
+	.machine-plate-text {
+		font-size: 32rpx;
+		color: #999999;
+	}
 
-.custom-btn {
-  background-color: #CA1E30 !important; /* 绿色背景 */
-  color: #ffffff !important;            /* 黑色文字 */
-  border-radius: 10px;                 /* 圆角 */
-  border: none;                        /* 去除边框 */
-  max-width: 600rpx;
-}
+	.custom-btn {
+		background-color: #CA1E30 !important;
+		/* 绿色背景 */
+		color: #ffffff !important;
+		/* 黑色文字 */
+		border-radius: 10px;
+		/* 圆角 */
+		border: none;
+		/* 去除边框 */
+		max-width: 600rpx;
+	}
 </style>
