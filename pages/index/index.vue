@@ -3,10 +3,10 @@
 		<fa-steps :active="currentIndex"></fa-steps>
 		<swiper :autoplay="false" :disable-touch="true" :current="currentIndex" class="swiper-container">
 			<swiper-item>
-				<button type="primary" @click="handleScanMachineBarCode" style="margin-bottom: 10rpx;">扫描机器条码</button>
+				<button type="primary" class="custom-btn"  @click="handleScanMachineBarCode" style="margin-bottom: 10rpx;">扫描机器条码</button>
 			</swiper-item>
 			<swiper-item>
-				<button type="primary" @click="handleScanMachineQRCode" style="margin-bottom: 10rpx;">扫描机器二维码</button>
+				<button type="primary" class="custom-btn" @click="handleScanMachineQRCode" style="margin-bottom: 10rpx;">扫描机器二维码</button>
 			</swiper-item>
 			<swiper-item>
 				<view class="machine-plate" @click="captureMachinePlate" v-if="!imagesrc">
@@ -199,7 +199,7 @@ export default {
 			// 请求ocr接口
 			uni.request({
 				// 本地ocr
-				url: 'http://192.168.123.123:1224/api/ocr',
+				url: 'http://192.168.1.3:1224/api/ocr',
 				// 85 ocr
 				// url: 'http://192.168.230.85:1224/api/ocr',
 				method: 'POST',
@@ -410,5 +410,13 @@ export default {
 .machine-plate-text {
 	font-size: 32rpx;
 	color: #999999;
+}
+
+.custom-btn {
+  background-color: #CA1E30 !important; /* 绿色背景 */
+  color: #ffffff !important;            /* 黑色文字 */
+  border-radius: 10px;                 /* 圆角 */
+  border: none;                        /* 去除边框 */
+  max-width: 600rpx;
 }
 </style>
